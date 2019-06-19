@@ -1,4 +1,4 @@
-{"type":"RECORD","stream":"CARS2","record":{"zcarModel":"Audi","price":"10000","color":"blue"}}
-{"type":"RECORD","stream":"CARS2","record":{"zcarModel":"BMW","price":"15000","color":"red"}}
-{"type":"RECORD","stream":"CARS2","record":{"zcarModel":"Mercedes","price":"20000","color":"yellow"}}
-{"type":"RECORD","stream":"CARS2","record":{"zcarModel":"Porsche","price":"30000","color":"green"}}
+{"strValue":{"type":"RECORD","stream":"cars2","record":{"zcarModel":"Audi","price":"10000","color":"blue"}}}
+{"strValue":{"type":"RECORD","stream":"cars2","record":{"zcarModel":"BMW","price":"15000","color":"red"}}}
+{"strValue":{"type":"RECORD","stream":"cars2","record":{"zcarModel":"Mercedes","price":"20000","color":"yellow"}}}
+{"strValue":{"type":"RECORD","stream":"cars2","record":{"zcarModel":"Porsche","price":"30000","color":"green"}}}
