@@ -84,3 +84,53 @@ We are using [Jest](https://facebook.github.io/jest/docs/en/getting-started.html
 
 
 Note: This document is written in [Markdown](https://daringfireball.net/projects/markdown/). We like to use [Typora](https://typora.io/) and [Markdown Preview Plus](https://chrome.google.com/webstore/detail/markdown-preview-plus/febilkbfcbhebfnokafefeacimjdckgl?hl=en-US) for our Markdown work..
+
+
+*Here I will be describing the functionality of this particular plugin*
+The job of tapFlat is the take a flat file and return an ndJson file.
+The plugin works for both buffer and stream. 
+It gives the user an opportunity to write down their own functions and use trasform call back. 
+
+Here is the sample gulp file for the plug in
+
+const logParse = (string1: string): object | null => {
+ 
+    let lineObj : any = {}// JSON.parse(string1)
+    let newDate = new Date(string1.slice(0,25));
+    lineObj.date = newDate
+    let tempLine = string1.slice(26,string1.length)
+    lineObj.type = tempLine.slice(0,tempLine.indexOf(":"))
+    let tempLine2 = tempLine.slice(tempLine.indexOf(":"),tempLine.length)
+    lineObj.description=tempLine2.slice(1,tempLine2.length);
+    return lineObj;
+  }
+
+function demonstrateHandlelines(callback: any) {
+  log.info('gulp starting for ' + PLUGIN_NAME)
+  return gulp.src('../testdata/*.log',{buffer:true})
+      .pipe(errorHandler(function(err:any) {
+        log.error('oops: ' + err)
+        callback(err)
+      }))
+      .on('data', function (file:Vinyl) {
+        log.info('Starting processing on ' + file.basename)
+      })   
+      // call logParse function above for each line
+      .pipe(tapFlat({},{transformCallback:logParse}))
+      // call the built-in handleline callback (by passing no callbacks to override the built-in default), which adds an extra param
+      .pipe(gulp.dest('../testdata/processed'))
+      
+      .on('end', function () {
+        log.info('end')
+        callback()
+      })
+    }
+
+
+
+    function test(callback: any) {
+      log.info('This seems to run only after a successful run of demonstrateHandlelines! Do deletions here?')
+      callback()
+    }
+
+exports.default = gulp.series(demonstrateHandlelines, test)
