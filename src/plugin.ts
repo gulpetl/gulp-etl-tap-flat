@@ -52,7 +52,7 @@ export function tapFlat(configObj: any, newHandlers?: allCallbacks) {
   
     let lineObj : any = {}
     lineObj.strValue = string1
-    return {type:"RECORD", stream:streamName, record:lineObj.strValue};
+    return lineObj;
   }
   
   const handleLine: TransformCallback = newHandlers && newHandlers.transformCallback ? newHandlers.transformCallback : defaultHandleLine;
