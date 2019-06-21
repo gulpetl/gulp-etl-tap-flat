@@ -21,7 +21,8 @@ export type allCallbacks = {
 /* This is a model gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
 https://github.com/gulpjs/gulp/blob/master/docs/writing-a-plugin/guidelines.md#what-does-a-good-plugin-look-like ),
 but with an additional feature: it accepts a configObj as its first parameter */
-export function tapFlat(newHandlers?: allCallbacks) {
+export function tapFlat(configObj: any, newHandlers?: allCallbacks) {
+  let propsToAdd = configObj.propsToAdd
 
   // handleLine could be the only needed piece to be replaced for most gulp-etl plugins
   const defaultFinishHandler = (): void => {

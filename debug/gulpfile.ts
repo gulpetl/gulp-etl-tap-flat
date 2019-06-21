@@ -45,7 +45,7 @@ function demonstrateHandlelines(callback: any) {
       })
       //pipe in tapFlat plugin    
       // call logParse function above for each line
-      .pipe(tapFlat({}))
+      .pipe(tapFlat({},{transformCallback:logParse}))
       
       .pipe(gulp.dest('../testdata/processed'))
       
