@@ -21,63 +21,21 @@ export type allCallbacks = {
 /* This is a model gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
 https://github.com/gulpjs/gulp/blob/master/docs/writing-a-plugin/guidelines.md#what-does-a-good-plugin-look-like ),
 but with an additional feature: it accepts a configObj as its first parameter */
-export function tapFlat(configObj: any, newHandlers?: allCallbacks) {
-  let propsToAdd = configObj.propsToAdd
+export function tapFlat(newHandlers?: allCallbacks) {
 
   // handleLine could be the only needed piece to be replaced for most gulp-etl plugins
-  const defaultHandleLine = (string1: string): object | null => {
-  
-    let lineObj : any = {}
-    lineObj.strValue = string1
-    return lineObj;
-  }
   const defaultFinishHandler = (): void => {
     log.info("The handler has officially ended!");
   }
   const defaultStartHandler = () => {
     log.info("The handler has officially started!");
   }
-  const handleLine: TransformCallback = newHandlers && newHandlers.transformCallback ? newHandlers.transformCallback : defaultHandleLine;
+  
   const finishHandler: FinishCallback = newHandlers && newHandlers.finishCallback ? newHandlers.finishCallback : defaultFinishHandler;
   let startHandler: StartCallback = newHandlers && newHandlers.startCallback ? newHandlers.startCallback : defaultStartHandler;
 
   
-  function newTransformer() {
-    let transformer = through2.obj(); // new transform stream, in object mode
-    transformer._onFirstLine = true; // we have to handle the first line differently, so we set a flag
-    // since we're counting on split to have already been called upstream, dataLine will be a single line at a time
-    transformer._transform = function (dataLine: string, encoding: string, callback: Function) {
-      let returnErr: any = null
-      try {
-        
-        let dataObj
-        let handledObj
-        try{if (dataLine.trim() != "") {
-
-          handledObj = handleLine(dataLine)
-        }}catch(err){
-           console.log("Error is here");
-        }
-        if (handledObj) {
-          let handledLine = JSON.stringify(handledObj)
-          if (this._onFirstLine) {
-            this._onFirstLine = false;
-          }
-          else {
-            handledLine = '\n' + handledLine;
-          }
-          log.debug(handledLine)
-          this.push(handledLine);
-        }
-      } catch (err) {
-        returnErr = new PluginError(PLUGIN_NAME, err);
-      }
-
-      callback(returnErr)
-    }
-    return transformer
-  }
-
+  
 
   // creating a stream through which each file will pass
   // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param
@@ -85,7 +43,55 @@ export function tapFlat(configObj: any, newHandlers?: allCallbacks) {
     const self = this
     let returnErr: any = null
     file.extname='.ndjson';
-    
+
+  // set the stream name to the file name (without extension)
+  let streamName : string = file.stem
+  
+  const defaultHandleLine = (string1: string): object | null => {
+  
+    let lineObj : any = {}
+    lineObj.strValue = string1
+    return {type:"RECORD", stream:streamName, record:lineObj.strValue};
+  }
+  
+  const handleLine: TransformCallback = newHandlers && newHandlers.transformCallback ? newHandlers.transformCallback : defaultHandleLine;
+
+  function newTransformer() {
+      let transformer = through2.obj(); // new transform stream, in object mode
+      transformer._onFirstLine = true; // we have to handle the first line differently, so we set a flag
+      // since we're counting on split to have already been called upstream, dataLine will be a single line at a time
+      transformer._transform = function (dataLine: string, encoding: string, callback: Function) {
+        let returnErr: any = null
+        try {
+          
+          let dataObj
+          let handledObj
+          try{if (dataLine.trim() != "") {
+  
+            handledObj = handleLine(dataLine)
+          }}catch(err){
+             console.log("Error is here");
+          }
+          if (handledObj) {
+            let handledLine = JSON.stringify({type:"RECORD", stream:streamName, record:handledObj})
+            if (this._onFirstLine) {
+              this._onFirstLine = false;
+            }
+            else {
+              handledLine = '\n' + handledLine;
+            }
+            log.debug(handledLine)
+            this.push(handledLine);
+          }
+        } catch (err) {
+          returnErr = new PluginError(PLUGIN_NAME, err);
+        }
+  
+        callback(returnErr)
+      }
+      return transformer
+    }
+
     if (file.isNull()) {
       // return empty file
       return cb(returnErr, file)
@@ -101,10 +107,9 @@ export function tapFlat(configObj: any, newHandlers?: allCallbacks) {
           let lineObj
           let tempLine
           if (strArray[dataIdx].trim() != "") {
-       
             tempLine = handleLine(strArray[dataIdx])
             if (tempLine){
-              resultArray.push(JSON.stringify(tempLine));
+              resultArray.push(JSON.stringify({type:"RECORD", stream:streamName, record:tempLine}));
               
             }
           }
@@ -122,7 +127,6 @@ export function tapFlat(configObj: any, newHandlers?: allCallbacks) {
       cb(returnErr, file)
     }
     else if (file.isStream()) {
-
       try {
          file.contents = file.contents
         // split plugin will split the file into lines
