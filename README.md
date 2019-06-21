@@ -1,9 +1,9 @@
 # gulp-etl-tap-flat #
 
 
-*(this plugin is being developed from *[gulp-etl-handlelines](https://github.com/gulpetl/gulp-etl-handlelines/)*. The original readme from gulp-etl-handlelines is below)*
+*(this plugin is being developed from *[gulp-etl-handlelines](https://github.com/gulpetl/gulp-etl-handlelines/)*. 
 
-Utility function providing a "handleline" callback which is called for every record in a **gulp-etl** **Message Stream**. This very powerful functionality can be used for filtering, transformations, counters, etc. and is a nice way to add functionality without building a full module. It also powers a number of our other modules, greatly simplifying their development by handling the "boilerplate" code needed for a module. Works in both buffer and streaming mode.
+The job of this plugin is to take a Flat File of any kind from a user and emit out an ndjson file. The plugin works in both buffer mode and stream mode. The defaultCallBack here will call the defaultHandleLines function which emits out records with only one property "StrValue"
 
 This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp](https://gulpjs.com/) plugin. **data-etl** plugins processes [ndjson](http://ndjson.org/) data streams/files which we call **Message Streams** and which are compliant with the [Singer specification](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#output). Message Streams look like this:
 
@@ -37,25 +37,23 @@ Send in callbacks as a second parameter in the form:
 
 ##### Sample gulpfile.js
 ```
-var handleLines = require('gulp-etl-handlelines').handlelines
+var handleLines = require('gulp-etl-tap-flat').tapFlat
 // for TypeScript use this line instead:
-// import { handlinelines } from 'gulp-etl-handlelines'
+// import { tapFlat } from 'gulp-etl-tap-flat'
 
-const linehandler = (lineObj) => {
-    // return null to remove this line
-    if (!lineObj.record || lineObj.record["TestValue"] == 'illegalValue') {return null}
-    
-    // optionally make changes to lineObj
-    lineObj.record["NewProperty"] = "asdf"
-
-    // return the changed lineObj
-    return lineObj
+const txtParse = (string1: string): object | null => {
+ 
+    let lineObj : any = {}// JSON.parse(string1)
+    lineObj.dayOfWeek = string1.slice(0,3);
+    let newDate = new Date(string1.slice(3,25));
+    lineObj.date = newDate
+    return lineObj;
 }
 
 exports.default = function() {
-    return src('data/*.ndjson')
-    // pipe the files through our handlelines plugin
-    .pipe(handlelines({}, { transformCallback: linehandler }))
+     return gulp.src('../testdata/*.txt',{buffer:false})
+    // pipe the files through our tap-flat plugin
+    .pipe(handlelines({}, { transformCallback: txtParse }))
     .pipe(dest('output/'));
 }
 ```
@@ -86,51 +84,4 @@ We are using [Jest](https://facebook.github.io/jest/docs/en/getting-started.html
 Note: This document is written in [Markdown](https://daringfireball.net/projects/markdown/). We like to use [Typora](https://typora.io/) and [Markdown Preview Plus](https://chrome.google.com/webstore/detail/markdown-preview-plus/febilkbfcbhebfnokafefeacimjdckgl?hl=en-US) for our Markdown work..
 
 
-*Here I will be describing the functionality of this particular plugin*
-The job of tapFlat is the take a flat file and return an ndJson file.
-The plugin works for both buffer and stream. 
-It gives the user an opportunity to write down their own functions and use trasform call back. 
 
-Here is the sample gulp file for the plug in
-
-const logParse = (string1: string): object | null => {
- 
-    let lineObj : any = {}// JSON.parse(string1)
-    let newDate = new Date(string1.slice(0,25));
-    lineObj.date = newDate
-    let tempLine = string1.slice(26,string1.length)
-    lineObj.type = tempLine.slice(0,tempLine.indexOf(":"))
-    let tempLine2 = tempLine.slice(tempLine.indexOf(":"),tempLine.length)
-    lineObj.description=tempLine2.slice(1,tempLine2.length);
-    return lineObj;
-  }
-
-function demonstrateHandlelines(callback: any) {
-  log.info('gulp starting for ' + PLUGIN_NAME)
-  return gulp.src('../testdata/*.log',{buffer:true})
-      .pipe(errorHandler(function(err:any) {
-        log.error('oops: ' + err)
-        callback(err)
-      }))
-      .on('data', function (file:Vinyl) {
-        log.info('Starting processing on ' + file.basename)
-      })   
-      // call logParse function above for each line
-      .pipe(tapFlat({},{transformCallback:logParse}))
-      // call the built-in handleline callback (by passing no callbacks to override the built-in default), which adds an extra param
-      .pipe(gulp.dest('../testdata/processed'))
-      
-      .on('end', function () {
-        log.info('end')
-        callback()
-      })
-    }
-
-
-
-    function test(callback: any) {
-      log.info('This seems to run only after a successful run of demonstrateHandlelines! Do deletions here?')
-      callback()
-    }
-
-exports.default = gulp.series(demonstrateHandlelines, test)

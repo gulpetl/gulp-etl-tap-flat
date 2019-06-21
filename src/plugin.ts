@@ -48,11 +48,12 @@ export function tapFlat(configObj: any, newHandlers?: allCallbacks) {
   // set the stream name to the file name (without extension)
   let streamName : string = file.stem
   
+  //This is a default function that will create one property strValue for the record
   const defaultHandleLine = (string1: string): object | null => {
   
     let lineObj : any = {}
     lineObj.strValue = string1
-    return lineObj;
+    return lineObj ;
   }
   
   const handleLine: TransformCallback = newHandlers && newHandlers.transformCallback ? newHandlers.transformCallback : defaultHandleLine;
@@ -74,6 +75,7 @@ export function tapFlat(configObj: any, newHandlers?: allCallbacks) {
              console.log("Error is here");
           }
           if (handledObj) {
+            /** wrap incoming recordObject in a Singer RECORD Message object*/
             let handledLine = JSON.stringify({type:"RECORD", stream:streamName, record:handledObj})
             if (this._onFirstLine) {
               this._onFirstLine = false;
@@ -105,7 +107,7 @@ export function tapFlat(configObj: any, newHandlers?: allCallbacks) {
       // we'll call handleLine on each line
       for (let dataIdx in strArray) {
         try {
-          let lineObj
+
           let tempLine
           if (strArray[dataIdx].trim() != "") {
             tempLine = handleLine(strArray[dataIdx])

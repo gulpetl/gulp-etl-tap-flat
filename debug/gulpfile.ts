@@ -6,12 +6,8 @@ const log = loglevel.getLogger('gulpfile')
 log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
 const errorHandler = require('gulp-error-handle'); // handle all errors in one handler, but still stop the stream if there are errors
 import Vinyl = require('vinyl') 
-const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
+//const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
 const PLUGIN_NAME = module.exports.name;
-
-function createRecord(recordObject:Object, streamName: string) : any {
-  return {type:"RECORD", stream:streamName, record:recordObject}
-}
 
 //This is a sample parser that breaks down the log lines into 3 properties, date, the type and the description 
 const logParse = (string1: string): object | null => {
@@ -23,17 +19,17 @@ const logParse = (string1: string): object | null => {
     let tempLine = string1.slice(25,string1.length)
     for (var _i = 0; _i < tempLine.length; _i++) {
     if(tempLine.charAt(_i)==(':')){
-    lineObj.type = tempLine.slice(0,tempLine.indexOf(":"))
+    lineObj.propertyType = tempLine.slice(0,tempLine.indexOf(":"))
     let tempLine2 = tempLine.slice(tempLine.indexOf(":")+1,tempLine.length)
     lineObj.description=tempLine2.slice(0,tempLine2.length);
     return lineObj}
     }
-    lineObj.type="Undefined";
+    lineObj.propertyType="Undefined";
     lineObj.description=tempLine;
     return lineObj;
   }
 
-function demonstrateHandlelines(callback: any) {
+function demonstrateTapFlat(callback: any) {
   log.info('gulp starting for ' + PLUGIN_NAME)
   return gulp.src('../testdata/*.log',{buffer:false})
       .pipe(errorHandler(function(err:any) {
@@ -45,7 +41,7 @@ function demonstrateHandlelines(callback: any) {
       })
       //pipe in tapFlat plugin    
       // call logParse function above for each line
-      .pipe(tapFlat({},{}))
+      .pipe(tapFlat({},{transformCallback:logParse}))
       
       .pipe(gulp.dest('../testdata/processed'))
       
@@ -58,8 +54,8 @@ function demonstrateHandlelines(callback: any) {
 
 
     function test(callback: any) {
-      log.info('This seems to run only after a successful run of demonstrateHandlelines! Do deletions here?')
+      log.info('This seems to run only after a successful run of demonstrateTapFlat! Do deletions here?')
       callback()
     }
 
-exports.default = gulp.series(demonstrateHandlelines, test)
+exports.default = gulp.series(demonstrateTapFlat, test)
