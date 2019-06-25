@@ -1,7 +1,7 @@
 # gulp-etl-tap-flat #
 
 
-The job of this plugin is to take a Flat File of any kind from a user and emit out an ndjson file. The plugin works in both buffer mode and stream mode. The plugin allows the users the trasnform call back option which gives them opportunity to create their own custom parser with custom properties. The users also have options to use the default parser using default call back. 
+The job of this plugin is to take a Flat file of any kind from a user and emit out an ndjson file. The plugin works in both buffer and stream modes. The plugin gives the users transform call back option which gives them opportunity to create their own custom parser with custom properties. The users also have options to use the default parser using default call back. 
 
 This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp](https://gulpjs.com/) plugin. **data-etl** plugins processes [ndjson](http://ndjson.org/) data streams/files which we call **Message Streams** and which are compliant with the [Singer specification](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#output). Message Streams look like this:
 
@@ -18,7 +18,7 @@ This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp
 **data-etl** plugins accept a configObj as its first parameter. The configObj
 will contain any info the plugin needs.
 
-The trasnform call back function will receive a string and is expected to return either an object to be passed downstream, or ```null``` to remove the message from the stream).
+The transform call back function will receive a string and is expected to return either an object to be passed downstream, or ```null``` to remove the message from the stream).
 
 This plugin also accepts a FinishCallback and StartCallback, which are functions that are executed before and after the TransformCallback. The FinishCallback can be used to manage data stored collected from the stream. 
 
@@ -38,11 +38,11 @@ var handleLines = require('gulp-etl-tap-flat').tapFlat
 // for TypeScript use this line instead:
 // import { tapFlat } from 'gulp-etl-tap-flat'
 
-const txtParse = (string1: string): object | null => {
+const txtParse = (fileLine: string): object | null => {
  
     let lineObj : any = {}
-    lineObj.propertyA = string1.slice(0,3);
-    let newDate = new Date(string1.slice(3,25));
+    lineObj.propertyA = fileLine.slice(0,3);
+    let newDate = new Date(fileLine.slice(3,25));
     lineObj.date = newDate
     return lineObj;
 }
