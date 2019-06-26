@@ -1,60 +1,50 @@
 let gulp = require('gulp')
-import {handlelines} from '../src/plugin'
-export { handlelines, TransformCallback } from '../src/plugin';
+import {tapFlat} from '../src/plugin'
+export { tapFlat, TransformCallback } from '../src/plugin';
 import * as loglevel from 'loglevel'
 const log = loglevel.getLogger('gulpfile')
 log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
-import * as rename from 'gulp-rename'
 const errorHandler = require('gulp-error-handle'); // handle all errors in one handler, but still stop the stream if there are errors
-
-import * as vinylPaths from 'vinyl-paths';
-import * as del from 'del';
-
-const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
+import Vinyl = require('vinyl') 
+//const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
 const PLUGIN_NAME = module.exports.name;
 
-// control the plugin's logging level separately from this 'gulpfile' logging
-//const pluginLog = loglevel.getLogger(PLUGIN_NAME)
-//pluginLog.setLevel('debug')
-
-
-// allCaps makes sure all string properties on the top level of lineObj have values that are all caps
-const allCaps = (lineObj: object): object => {
-  log.debug(lineObj)
-  for (let propName in lineObj) {
-    let obj = (<any>lineObj)
-    if (typeof (obj[propName]) == "string")
-      obj[propName] = obj[propName].toUpperCase()
+//This is a sample parser that breaks down the log lines into 3 properties, date, the type and the description 
+const logParse = (string1: string): object | null => {
+ 
+    let lineObj : any = {}// JSON.parse(string1)
+    lineObj.dayOfWeek = string1.slice(0,3);
+    let newDate = new Date(string1.slice(3,25));
+    lineObj.date = newDate
+    let tempLine = string1.slice(25,string1.length)
+    for (var _i = 0; _i < tempLine.length; _i++) {
+    if(tempLine.charAt(_i)==(':')){
+    lineObj.propertyType = tempLine.slice(0,tempLine.indexOf(":"))
+    let tempLine2 = tempLine.slice(tempLine.indexOf(":")+1,tempLine.length)
+    lineObj.description=tempLine2.slice(0,tempLine2.length);
+    return lineObj}
+    }
+    lineObj.propertyType="Undefined";
+    lineObj.description=tempLine;
+    return lineObj;
   }
-  
-  // for testing: cause an error
-  // let err; 
-  // let zz = (err as any).nothing;
 
-  return lineObj
-}
-
-
-function demonstrateHandlelines(callback: any) {
+function demonstrateTapFlat(callback: any) {
   log.info('gulp starting for ' + PLUGIN_NAME)
-  return gulp.src('../testdata/*.ndjson',{buffer:false})
+  return gulp.src('../testdata/*.log',{buffer:false})
       .pipe(errorHandler(function(err:any) {
         log.error('oops: ' + err)
         callback(err)
       }))
-      // call allCaps function above for each line
-      .pipe(handlelines({}, { transformCallback: allCaps }))
-      // call the built-in handleline callback (by passing no callbacks to override the built-in default), which adds an extra param
-      .pipe(handlelines({ propsToAdd: { extraParam: 1 } }))
-      .pipe(rename({
-        suffix: "-fixed",
-      }))      
+      .on('data', function (file:Vinyl) {
+        log.info('Starting processing on ' + file.basename)
+      })
+      //pipe in tapFlat plugin    
+      // call logParse function above for each line
+      .pipe(tapFlat({},{transformCallback:logParse}))
+      
       .pipe(gulp.dest('../testdata/processed'))
-      // .pipe(vinylPaths((path) => {
-      //   // experimenting with deleting files, per https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md.
-      //   // This actually deletes the NEW files, not the originals! Try gulp-revert-path
-      //   return del(path, {force:true})
-      // }))
+      
       .on('end', function () {
         log.info('end')
         callback()
@@ -64,8 +54,8 @@ function demonstrateHandlelines(callback: any) {
 
 
     function test(callback: any) {
-      log.info('This seems to run only after a successful run of demonstrateHandlelines! Do deletions here?')
+      log.info('This seems to run only after a successful run of demonstrateTapFlat! Do deletions here?')
       callback()
     }
 
-exports.default = gulp.series(demonstrateHandlelines, test)
+exports.default = gulp.series(demonstrateTapFlat, test)

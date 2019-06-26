@@ -1,9 +1,7 @@
 # gulp-etl-tap-flat #
 
 
-*(this plugin is being developed from *[gulp-etl-handlelines](https://github.com/gulpetl/gulp-etl-handlelines/)*. The original readme from gulp-etl-handlelines is below)*
-
-Utility function providing a "handleline" callback which is called for every record in a **gulp-etl** **Message Stream**. This very powerful functionality can be used for filtering, transformations, counters, etc. and is a nice way to add functionality without building a full module. It also powers a number of our other modules, greatly simplifying their development by handling the "boilerplate" code needed for a module. Works in both buffer and streaming mode.
+The job of this plugin is to take a Flat file of any kind from a user and emit out an ndjson file. The plugin works in both buffer and stream modes. The plugin gives the users transform call back option which gives them opportunity to create their own custom parser with custom properties. The users also have options to use the default parser using default call back. 
 
 This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp](https://gulpjs.com/) plugin. **data-etl** plugins processes [ndjson](http://ndjson.org/) data streams/files which we call **Message Streams** and which are compliant with the [Singer specification](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#output). Message Streams look like this:
 
@@ -20,8 +18,7 @@ This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp
 **data-etl** plugins accept a configObj as its first parameter. The configObj
 will contain any info the plugin needs.
 
-In addition, this plugin also accepts a TransformCallback function. That function will receive a 
-Singer message object (a [RECORD](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#record-message), [SCHEMA](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#schema-message) or [STATE](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#state-message)) and is expected to return either the Singer message object (whether transformed or unchanged) to be passed downstream, or ```null``` to remove the message from the stream).
+The transform call back function will receive a string and is expected to return either an object to be passed downstream, or ```null``` to remove the message from the stream).
 
 This plugin also accepts a FinishCallback and StartCallback, which are functions that are executed before and after the TransformCallback. The FinishCallback can be used to manage data stored collected from the stream. 
 
@@ -34,28 +31,26 @@ Send in callbacks as a second parameter in the form:
     startCallback: startFunction
 }
 ```
-
+This is the demonstration of trasnsform call back function that users can call inside the gulpfile 
 ##### Sample gulpfile.js
 ```
-var handleLines = require('gulp-etl-handlelines').handlelines
+var handleLines = require('gulp-etl-tap-flat').tapFlat
 // for TypeScript use this line instead:
-// import { handlinelines } from 'gulp-etl-handlelines'
+// import { tapFlat } from 'gulp-etl-tap-flat'
 
-const linehandler = (lineObj) => {
-    // return null to remove this line
-    if (!lineObj.record || lineObj.record["TestValue"] == 'illegalValue') {return null}
-    
-    // optionally make changes to lineObj
-    lineObj.record["NewProperty"] = "asdf"
-
-    // return the changed lineObj
-    return lineObj
+const txtParse = (fileLine: string): object | null => {
+ 
+    let lineObj : any = {}
+    lineObj.propertyA = fileLine.slice(0,3);
+    let newDate = new Date(fileLine.slice(3,25));
+    lineObj.date = newDate
+    return lineObj;
 }
 
 exports.default = function() {
-    return src('data/*.ndjson')
-    // pipe the files through our handlelines plugin
-    .pipe(handlelines({}, { transformCallback: linehandler }))
+     return src('data/*.txt')
+    // pipe the files through our tap-flat plugin
+    .pipe(tapFlat({}, { transformCallback: txtParse }))
     .pipe(dest('output/'));
 }
 ```
@@ -84,3 +79,6 @@ We are using [Jest](https://facebook.github.io/jest/docs/en/getting-started.html
 
 
 Note: This document is written in [Markdown](https://daringfireball.net/projects/markdown/). We like to use [Typora](https://typora.io/) and [Markdown Preview Plus](https://chrome.google.com/webstore/detail/markdown-preview-plus/febilkbfcbhebfnokafefeacimjdckgl?hl=en-US) for our Markdown work..
+
+
+
