@@ -10,13 +10,13 @@ import Vinyl = require('vinyl')
 const PLUGIN_NAME = module.exports.name;
 
 //This is a sample parser that breaks down the log lines into 3 properties, date, the type and the description 
-const logParse = (string1: string): object | null => {
+const logParse = (flatLine: string): object | null => {
  
     let lineObj : any = {}// JSON.parse(string1)
-    lineObj.dayOfWeek = string1.slice(0,3);
-    let newDate = new Date(string1.slice(3,25));
+    lineObj.dayOfWeek = flatLine.slice(0,3);
+    let newDate = new Date(flatLine.slice(3,25));
     lineObj.date = newDate
-    let tempLine = string1.slice(25,string1.length)
+    let tempLine = flatLine.slice(25,flatLine.length)
     for (var _i = 0; _i < tempLine.length; _i++) {
     if(tempLine.charAt(_i)==(':')){
     lineObj.propertyType = tempLine.slice(0,tempLine.indexOf(":"))
@@ -39,8 +39,7 @@ function demonstrateTapFlat(callback: any) {
       .on('data', function (file:Vinyl) {
         log.info('Starting processing on ' + file.basename)
       })
-      //pipe in tapFlat plugin    
-      // call logParse function above for each line
+      // pipe file through tapFlat, which will call logParse function above for each line
       .pipe(tapFlat({},{transformCallback:logParse}))
       
       .pipe(gulp.dest('../testdata/processed'))
@@ -51,11 +50,4 @@ function demonstrateTapFlat(callback: any) {
       })
     }
 
-
-
-    function test(callback: any) {
-      log.info('This seems to run only after a successful run of demonstrateTapFlat! Do deletions here?')
-      callback()
-    }
-
-exports.default = gulp.series(demonstrateTapFlat, test)
+exports.default =demonstrateTapFlat

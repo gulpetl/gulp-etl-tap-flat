@@ -3,7 +3,7 @@
 
 This plugin takes a flat file of any kind from a user and emits a Message Stream JSON file. The plugin works in both buffer and stream modes. Users provide a transformCallback option which is their own custom parser, parsing each line into an object. 
 
-This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp](https://gulpjs.com/) plugin. **gulp-etl** plugins processe [ndjson](http://ndjson.org/) data streams/files which we call **Message Streams** and which are compliant with the [Singer specification](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#output). Message Streams look like this:
+This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp](https://gulpjs.com/) plugin. **gulp-etl** plugins process [ndjson](http://ndjson.org/) data streams/files which we call **Message Streams** and which are compliant with the [Singer specification](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#output). Message Streams look like this:
 
 ```
 {"type": "SCHEMA", "stream": "users", "key_properties": ["id"], "schema": {"required": ["id"], "type": "object", "properties": {"id": {"type": "integer"}}}}
@@ -15,8 +15,7 @@ This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp
 ```
 
 ### Usage
-**gulp-etl** plugins accept a configObj as its first parameter. The configObj
-will contain any info the plugin needs.
+**gulp-etl** plugins accept a configObj as the first parameter, but for this plugin the work is mainly done by the transformCallback so it has no options to set and it ignores the configObj.
 
 The transformCallback function will receive a string and is expected to return either an object to be passed downstream, or ```null``` to remove the message from the stream.
 
@@ -33,12 +32,13 @@ Send in callbacks as a second parameter in the form:
 ```
 ##### Sample gulpfile.js
 ```
+/* Parse data from an arbitrary fixed-width text file */
+
 var handleLines = require('gulp-etl-tap-flat').tapFlat
 // for TypeScript use this line instead:
 // import { tapFlat } from 'gulp-etl-tap-flat'
 
 const txtParse = (fileLine: string): object | null => {
- 
     let lineObj : any = {}
     lineObj.propertyA = fileLine.slice(0,3);
     let newDate = new Date(fileLine.slice(3,25));
