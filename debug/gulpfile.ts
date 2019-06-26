@@ -3,7 +3,7 @@ import {tapFlat} from '../src/plugin'
 export { tapFlat, TransformCallback } from '../src/plugin';
 import * as loglevel from 'loglevel'
 const log = loglevel.getLogger('gulpfile')
-log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
+log.setLevel((process.env.DEBUG_LEVEL || 'warn') as loglevel.LogLevelDesc)
 const errorHandler = require('gulp-error-handle'); // handle all errors in one handler, but still stop the stream if there are errors
 import Vinyl = require('vinyl') 
 //const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
